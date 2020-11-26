@@ -2,64 +2,66 @@ import cv2
 import time
 import numpy as np
 
-## Preparation for writing the ouput video
+#To save the output in a file output.avi
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480))
+output_file = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480))
 
-##reading from the webcam
+#Starting the webcam
 cap = cv2.VideoCapture(0)
 
-## Allow the system to sleep for 3 seconds before the webcam starts
-time.sleep(3)
-count = 0
-background = 0
+#Allowing the webcam to start by making the code sleep for 2 seconds
+time.sleep(2)
+bg = 0
 
-## Capture the background in range of 60
+#Capturing background for 60 frames
 for i in range(60):
-    ret, background = cap.read()
-background = np.flip(background, axis=1)
+    ret, bg = cap.read()
+#Flipping the background
+bg = np.flip(bg, axis=1)
 
-## Read every frame from the webcam, until the camera is open
+#Reading the captured frame until the camera is open
 while (cap.isOpened()):
     ret, img = cap.read()
     if not ret:
         break
-    count += 1
+    #Flipping the image for consistency
     img = np.flip(img, axis=1)
 
-    ## Convert the color space from BGR to HSV
+    #Converting the color from BGR to HSV
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    ## Generat masks to detect red color
-    
-    ##YOU CAN CHANGE THE COLOR VALUE BELOW ACCORDING TO YOUR CLOTH COLOR
+    #Generating mask to detect red colour
+    #These values can also be changed as per the color
     lower_red = np.array([0, 120, 50])
     upper_red = np.array([10, 255,255])
-    mask1 = cv2.inRange(hsv, lower_red, upper_red)
+    mask_1 = cv2.inRange(hsv, lower_red, upper_red)
 
     lower_red = np.array([170, 120, 70])
     upper_red = np.array([180, 255, 255])
-    mask2 = cv2.inRange(hsv, lower_red, upper_red)
+    mask_2 = cv2.inRange(hsv, lower_red, upper_red)
 
-    mask1 = mask1 + mask2
+    mask_1 = mask_1 + mask_2
 
-    ## Open and Dilate the mask image
-    mask1 = cv2.morphologyEx(mask1, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-    mask1 = cv2.morphologyEx(mask1, cv2.MORPH_DILATE, np.ones((3, 3), np.uint8))
+    #Open and expand the image where there is mask 1 (color)
+    mask_1 = cv2.morphologyEx(mask_1, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    mask_1 = cv2.morphologyEx(mask_1, cv2.MORPH_DILATE, np.ones((3, 3), np.uint8))
 
-    ## Create an inverted mask to segment out the red color from the frame
-    mask2 = cv2.bitwise_not(mask1)
+    #Selecting only the part that does not have mask one and saving in mask 2
+    mask_2 = cv2.bitwise_not(mask_1)
 
-    ## Segment the red color part out of the frame using bitwise and with the inverted mask
-    res1 = cv2.bitwise_and(img, img, mask=mask2)
+    #Keeping only the part of the images without the red color 
+    #(or any other color you may choose)
+    res_1 = cv2.bitwise_and(img, img, mask=mask_2)
 
-    ## Create image showing static background frame pixels only for the masked region
-    res2 = cv2.bitwise_and(background, background, mask=mask1)
+    #Keeping only the part of the images with the red color
+    #(or any other color you may choose)
+    res_2 = cv2.bitwise_and(bg, bg, mask=mask_1)
 
-    ## Generating the final output and writing
-    finalOutput = cv2.addWeighted(res1, 1, res2, 1, 0)
-    out.write(finalOutput)
-    cv2.imshow("magic", finalOutput)
+    #Generating the final output by merging res_1 and res_2
+    final_output = cv2.addWeighted(res_1, 1, res_2, 1, 0)
+    output_file.write(final_output)
+    #Displaying the output to the user
+    cv2.imshow("magic", final_output)
     cv2.waitKey(1)
 
 
