@@ -20,10 +20,9 @@ while (cap.isOpened()):
     if not ret:
         break
     #Flipping the image for consistency
-    img = np.flip(img, axis=1)
-
+   
     #Converting the color from BGR to HSV
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    
 
     #Generating mask to detect red colour
     #These values can also be changed as per the color
